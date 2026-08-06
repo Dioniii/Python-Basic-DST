@@ -24,6 +24,7 @@ exitButton = Rect(
 )
 
 hovered_button = None
+sound_on = True
 
 PANEL_BORDER = (224, 145, 56)
 BUTTON_BORDER = (240, 181, 72)
@@ -32,6 +33,10 @@ BUTTON_HOVER = (204, 86, 45)
 TEXT_COLOR = (255, 245, 216)
 ACCENT_COLOR = (245, 177, 66)
 SHADOW_COLOR = (18, 16, 25)
+
+background_sound = sounds.background
+background_sound.set_volume(0.25)
+background_sound.play(-1)
 
 
 def draw_button(button, label, button_name):
@@ -73,7 +78,8 @@ def draw():
     )
 
     draw_button(startButton, "START GAME", "start")
-    draw_button(soundButton, "SOUND: ON", "sound")
+    sound_label = "SOUND: ON" if sound_on else "SOUND: OFF"
+    draw_button(soundButton, sound_label, "sound")
     draw_button(exitButton, "EXIT", "exit")
 
 
@@ -89,17 +95,21 @@ def on_mouse_move(pos):
     else:
         hovered_button = None
 
-
 def on_mouse_down(pos, button):
+    global sound_on
+
     if button != mouse.LEFT:
         return
 
     if startButton.collidepoint(pos):
         print("Start clicked")
+
     elif soundButton.collidepoint(pos):
-        print("Sound clicked")
+        sound_on = not sound_on
+        background_sound.set_volume(0.4 if sound_on else 0)
+
     elif exitButton.collidepoint(pos):
-        print("Exit clicked")
+        exit()
 
 
 pgzrun.go()
