@@ -1,4 +1,5 @@
 import pgzrun
+import gameplay
 
 WIDTH = 800
 HEIGHT = 450
@@ -25,6 +26,7 @@ exitButton = Rect(
 
 hovered_button = None
 sound_on = True
+current_screen = "menu"
 
 PANEL_BORDER = (224, 145, 56)
 BUTTON_BORDER = (240, 181, 72)
@@ -55,7 +57,7 @@ def draw_button(button, label, button_name):
     screen.draw.text(label, center=button.center, color=text_color, fontsize=30)
 
 
-def draw():
+def draw_menu():
     screen.blit("menu_background", (0, 0))
 
     screen.draw.filled_rect(menu_panel, (12, 25, 42))
@@ -83,8 +85,36 @@ def draw():
     draw_button(exitButton, "EXIT", "exit")
 
 
+def draw_game():
+    gameplay.draw(screen)
+    screen.draw.text(
+        "Press ESC to return to the menu",
+        midbottom=(WIDTH // 2, HEIGHT - 12),
+        color=TEXT_COLOR,
+        fontsize=20,
+        shadow=(1, 1),
+        scolor=(0, 0, 0),
+    )
+
+
+def draw():
+    if current_screen == "menu":
+        draw_menu()
+    else:
+        draw_game()
+
+
+def update():
+    if current_screen == "game":
+        gameplay.update()
+
+
 def on_mouse_move(pos):
     global hovered_button
+
+    if current_screen != "menu":
+        hovered_button = None
+        return
 
     if startButton.collidepoint(pos):
         hovered_button = "start"
@@ -96,13 +126,14 @@ def on_mouse_move(pos):
         hovered_button = None
 
 def on_mouse_down(pos, button):
-    global sound_on
+    global current_screen, sound_on
 
-    if button != mouse.LEFT:
+    if button != mouse.LEFT or current_screen != "menu":
         return
 
     if startButton.collidepoint(pos):
-        print("Start clicked")
+        gameplay.start()
+        current_screen = "game"
 
     elif soundButton.collidepoint(pos):
         sound_on = not sound_on
@@ -110,6 +141,13 @@ def on_mouse_down(pos, button):
 
     elif exitButton.collidepoint(pos):
         exit()
+
+
+def on_key_down(key):
+    global current_screen
+
+    if key == keys.ESCAPE and current_screen == "game":
+        current_screen = "menu"
 
 
 pgzrun.go()
