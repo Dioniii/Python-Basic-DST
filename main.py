@@ -1,5 +1,4 @@
 import pgzrun
-import pygame
 
 WIDTH = 800
 HEIGHT = 450
@@ -25,17 +24,6 @@ exitButton = Rect(
 )
 
 hovered_button = None
-
-background_image = pygame.transform.smoothscale(
-    images.background,
-    (WIDTH, HEIGHT),
-)
-
-menu_panel_surface = pygame.Surface(
-    (menu_panel.width, menu_panel.height),
-    pygame.SRCALPHA,
-)
-menu_panel_surface.fill((12, 25, 42, 230))
 
 PANEL_BORDER = (224, 145, 56)
 BUTTON_BORDER = (240, 181, 72)
@@ -63,9 +51,9 @@ def draw_button(button, label, button_name):
 
 
 def draw():
-    screen.blit(background_image, (0, 0))
+    screen.blit("menu_background", (0, 0))
 
-    screen.blit(menu_panel_surface, menu_panel.topleft)
+    screen.draw.filled_rect(menu_panel, (12, 25, 42))
     screen.draw.rect(menu_panel, PANEL_BORDER)
     screen.draw.rect(menu_panel.inflate(-2, -2), PANEL_BORDER)
 
