@@ -1,4 +1,5 @@
 import pgzrun
+import pygame
 
 WIDTH = 800
 HEIGHT = 450
@@ -25,41 +26,61 @@ exitButton = Rect(
 
 hovered_button = None
 
+background_image = pygame.transform.smoothscale(
+    images.background,
+    (WIDTH, HEIGHT),
+)
+
+menu_panel_surface = pygame.Surface(
+    (menu_panel.width, menu_panel.height),
+    pygame.SRCALPHA,
+)
+menu_panel_surface.fill((12, 25, 42, 230))
+
+PANEL_BORDER = (224, 145, 56)
+BUTTON_BORDER = (240, 181, 72)
+BUTTON_NORMAL = (154, 60, 43)
+BUTTON_HOVER = (204, 86, 45)
+TEXT_COLOR = (255, 245, 216)
+ACCENT_COLOR = (245, 177, 66)
+SHADOW_COLOR = (18, 16, 25)
+
 
 def draw_button(button, label, button_name):
     shadow = Rect(button.x + 5, button.y + 5, button.width, button.height)
-    screen.draw.filled_rect(shadow, (5, 15, 8))
+    screen.draw.filled_rect(shadow, SHADOW_COLOR)
 
     if hovered_button == button_name:
-        button_color = (70, 155, 75)
-        text_color = (255, 245, 180)
-    else:
-        button_color = (35, 105, 50)
+        button_color = BUTTON_HOVER
         text_color = "white"
+    else:
+        button_color = BUTTON_NORMAL
+        text_color = TEXT_COLOR
 
-    screen.draw.filled_rect(button, button_color)
-    screen.draw.rect(button, (180, 220, 120))
+    screen.draw.filled_rect(button, BUTTON_BORDER)
+    screen.draw.filled_rect(button.inflate(-4, -4), button_color)
     screen.draw.text(label, center=button.center, color=text_color, fontsize=30)
 
 
 def draw():
-    screen.blit("background", (0, 0))
+    screen.blit(background_image, (0, 0))
 
-    screen.draw.filled_rect(menu_panel, (10, 38, 20))
-    screen.draw.rect(menu_panel, (150, 205, 90))
+    screen.blit(menu_panel_surface, menu_panel.topleft)
+    screen.draw.rect(menu_panel, PANEL_BORDER)
+    screen.draw.rect(menu_panel.inflate(-2, -2), PANEL_BORDER)
 
     screen.draw.text(
-        "WELCOME TO MY GAME",
+        "Industrial Warfare",
         center=(WIDTH // 2, 82),
-        color=(245, 245, 220),
+        color=TEXT_COLOR,
         fontsize=40,
-        shadow=(2, 2),
+        shadow=(1, 1),
         scolor=(0, 0, 0),
     )
     screen.draw.text(
         "MAIN MENU",
         center=(WIDTH // 2, 125),
-        color=(170, 215, 110),
+        color=ACCENT_COLOR,
         fontsize=20,
     )
 
