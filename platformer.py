@@ -1,5 +1,3 @@
-"""Pygame Zero-only loader for the CSV layers exported from Tiled."""
-
 from pathlib import Path
 
 from pgzero.builtins import Rect
@@ -11,7 +9,6 @@ MAP_ROWS = 20
 MAP_WIDTH = MAP_COLUMNS * TILE_SIZE
 MAP_HEIGHT = MAP_ROWS * TILE_SIZE
 
-# The application window matches the map, so tiles start at its top-left edge.
 MAP_ORIGIN = (0, 0)
 
 DRAW_ORDER = (
@@ -23,19 +20,14 @@ DRAW_ORDER = (
     "collectibles",
 )
 
-# Acid surfaces and acid body tiles from the obstacle layer.
 ACID_TILE_IDS = {13, 29, 45, 94, 95}
 
-# These are the two vertically stacked door images in the door layer. Other
-# tiles in that layer are decorative edges around the terrain.
 EXIT_TILE_IDS = {12, 28}
 
 PROJECT_DIR = Path(__file__).resolve().parent
 
 
 class Tile:
-    """One visible tile and its matching world-space rectangle."""
-
     def __init__(self, tile_id, column, row, tile_size, origin):
         x = origin[0] + column * tile_size
         y = origin[1] + row * tile_size
@@ -46,8 +38,6 @@ class Tile:
 
 
 def load_csv_layer(filename, tile_size=TILE_SIZE, origin=MAP_ORIGIN):
-    """Turn a Tiled CSV export into a list of drawable Tile objects."""
-
     path = PROJECT_DIR / filename
     tiles = []
 
@@ -71,7 +61,6 @@ def load_csv_layer(filename, tile_size=TILE_SIZE, origin=MAP_ORIGIN):
         for column_number, value in enumerate(values):
             tile_id = int(value)
 
-            # Tiled uses -1 in an exported CSV to represent an empty cell.
             if tile_id >= 0:
                 tiles.append(
                     Tile(
@@ -87,8 +76,6 @@ def load_csv_layer(filename, tile_size=TILE_SIZE, origin=MAP_ORIGIN):
 
 
 class TileMap:
-    """All visual, collision, collectible, and exit data for one level."""
-
     def __init__(self, layer_files):
         missing_layers = set(DRAW_ORDER) - set(layer_files)
 
@@ -123,15 +110,11 @@ class TileMap:
         self.bounds = Rect(MAP_ORIGIN, (MAP_WIDTH, MAP_HEIGHT))
 
     def draw(self, screen):
-        """Draw layers in back-to-front order."""
-
         for layer_name in DRAW_ORDER:
             for tile in self.layers[layer_name]:
                 screen.blit(tile.image, tile.rect.topleft)
 
     def collect_items_at(self, player_rect):
-        """Remove and report any unlock item touched by the player."""
-
         remaining_items = []
         collected = False
 

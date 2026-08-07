@@ -1,5 +1,3 @@
-"""Shared autonomous patrol logic for robot and zombie enemies."""
-
 from pgzero.builtins import Rect
 
 

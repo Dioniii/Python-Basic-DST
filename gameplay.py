@@ -22,6 +22,7 @@ BULLET_SPEED = 7
 PLAYER_BORDER = (255, 245, 216)
 TEXT_COLOR = (255, 245, 216)
 BULLET_COLOR = (245, 177, 66)
+LEVEL_BACKGROUND_COLOR = (112, 55, 38)
 
 PLAYER_SPRITE_SIZE = (40, 36)
 PLAYER_IDLE_IMAGES = (
@@ -116,8 +117,6 @@ def play_sound(effect):
 
 
 def reset_player():
-    """Return the player to the map's starting platform."""
-
     global velocity_y, on_ground, animation_tick, facing_left
 
     spawn_column, spawn_floor_row = LEVELS[current_level_index]["spawn"]
@@ -130,8 +129,6 @@ def reset_player():
 
 
 def load_level(level_index):
-    """Load one level and reset its player, key, and game state."""
-
     global level, current_level_index, has_key, state, bullets, enemies
 
     current_level_index = level_index
@@ -157,14 +154,10 @@ def load_level(level_index):
 
 
 def start():
-    """Begin again from the first configured level."""
-
     load_level(0)
 
 
 def advance_level():
-    """Enter the next configured level, or finish after the final door."""
-
     global state
 
     next_level_index = current_level_index + 1
@@ -345,7 +338,7 @@ def get_player_image():
 
 
 def draw(screen):
-    screen.fill((12, 25, 42))
+    screen.fill(LEVEL_BACKGROUND_COLOR)
 
     if level is None:
         return
