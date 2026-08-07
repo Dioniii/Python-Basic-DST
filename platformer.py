@@ -11,16 +11,19 @@ MAP_ROWS = 20
 MAP_WIDTH = MAP_COLUMNS * TILE_SIZE
 MAP_HEIGHT = MAP_ROWS * TILE_SIZE
 
-# Centre the 540 x 360 map in the project's 800 x 450 window.
-MAP_ORIGIN = ((800 - MAP_WIDTH) // 2, (450 - MAP_HEIGHT) // 2)
+# The application window matches the map, so tiles start at its top-left edge.
+MAP_ORIGIN = (0, 0)
 
-LAYER_FILES = (
-    ("platforms", "untitled_platforms.csv"),
-    ("obstacles", "untitled_obsticle.csv"),
-    ("scaffolding", "untitled_scaffolding.csv"),
-    ("doors", "untitled_door.csv"),
-    ("keys", "untitled_key.csv"),
+LAYER_SUFFIXES = (
+    ("platforms", "platforms"),
+    ("obstacles", "obsticle"),
+    ("scaffolding", "scaffolding"),
+    ("doors", "door"),
+    ("keys", "key"),
 )
+
+# Acid surfaces and acid body tiles from the obstacle layer.
+ACID_TILE_IDS = {13, 29, 45, 94, 95}
 
 # These are the two vertically stacked door images in the door layer. Other
 # tiles in that layer are decorative edges around the terrain.
@@ -85,16 +88,25 @@ def load_csv_layer(filename, tile_size=TILE_SIZE, origin=MAP_ORIGIN):
 class TileMap:
     """All visual, collision, collectible, and exit data for one level."""
 
-    def __init__(self):
+    def __init__(self, level_name):
+        self.level_name = level_name
         self.layers = {
-            layer_name: load_csv_layer(filename)
-            for layer_name, filename in LAYER_FILES
+            layer_name: load_csv_layer(f"{level_name}_{suffix}.csv")
+            for layer_name, suffix in LAYER_SUFFIXES
         }
 
         self.solid_rects = [
             tile.rect
-            for layer_name in ("platforms", "obstacles")
-            for tile in self.layers[layer_name]
+            for tile in self.layers["platforms"]
+        ] + [
+            tile.rect
+            for tile in self.layers["obstacles"]
+            if tile.tile_id not in ACID_TILE_IDS
+        ]
+        self.hazard_rects = [
+            tile.rect
+            for tile in self.layers["obstacles"]
+            if tile.tile_id in ACID_TILE_IDS
         ]
         self.exit_rects = [
             tile.rect
@@ -106,7 +118,7 @@ class TileMap:
     def draw(self, screen):
         """Draw layers in back-to-front order."""
 
-        for layer_name, _filename in LAYER_FILES:
+        for layer_name, _suffix in LAYER_SUFFIXES:
             for tile in self.layers[layer_name]:
                 screen.blit(tile.image, tile.rect.topleft)
 
@@ -129,4 +141,10 @@ class TileMap:
         return any(
             player_rect.colliderect(exit_rect)
             for exit_rect in self.exit_rects
+        )
+
+    def player_touches_hazard(self, player_rect):
+        return any(
+            player_rect.colliderect(hazard_rect)
+            for hazard_rect in self.hazard_rects
         )

@@ -1,13 +1,9 @@
-"""Gameplay state and movement for the tile-map level."""
-
 from pgzero.builtins import Rect, keyboard, keys
 
-from platformer import MAP_ORIGIN, TILE_SIZE, TileMap
+from platformer import MAP_HEIGHT, MAP_ORIGIN, MAP_WIDTH, TILE_SIZE, TileMap
 
 
 PLAYER_SIZE = (14, 28)
-PLAYER_START_COLUMN = 7
-PLAYER_START_FLOOR_ROW = 16
 MOVE_SPEED = 3
 GRAVITY = 1
 MAX_FALL_SPEED = 12
@@ -17,8 +13,18 @@ PLAYER_COLOR = (204, 86, 45)
 PLAYER_BORDER = (255, 245, 216)
 TEXT_COLOR = (255, 245, 216)
 
+# Add another dictionary here after exporting its five CSV layers. The door
+# advances through this list in order.
+LEVELS = (
+    {
+        "name": "untitled",
+        "spawn": (4, 11),
+    },
+)
+
 player = Rect((0, 0), PLAYER_SIZE)
 level = None
+current_level_index = 0
 velocity_y = 0
 on_ground = False
 has_key = False
@@ -30,21 +36,42 @@ def reset_player():
 
     global velocity_y, on_ground
 
-    player.x = MAP_ORIGIN[0] + PLAYER_START_COLUMN * TILE_SIZE
-    player.bottom = MAP_ORIGIN[1] + PLAYER_START_FLOOR_ROW * TILE_SIZE
+    spawn_column, spawn_floor_row = LEVELS[current_level_index]["spawn"]
+    player.x = MAP_ORIGIN[0] + spawn_column * TILE_SIZE
+    player.bottom = MAP_ORIGIN[1] + spawn_floor_row * TILE_SIZE
     velocity_y = 0
     on_ground = False
 
 
-def start():
-    """Load a fresh copy of the level whenever Start Game is selected."""
+def load_level(level_index):
+    """Load one level and reset its player, key, and game state."""
 
-    global level, has_key, state
+    global level, current_level_index, has_key, state
 
-    level = TileMap()
+    current_level_index = level_index
+    level = TileMap(LEVELS[level_index]["name"])
     has_key = False
     state = "playing"
     reset_player()
+
+
+def start():
+    """Begin again from the first configured level."""
+
+    load_level(0)
+
+
+def advance_level():
+    """Enter the next configured level, or finish after the final door."""
+
+    global state
+
+    next_level_index = current_level_index + 1
+
+    if next_level_index < len(LEVELS):
+        load_level(next_level_index)
+    else:
+        state = "won"
 
 
 def move_horizontal(amount):
@@ -84,7 +111,7 @@ def move_vertical():
 
 
 def update():
-    global has_key, state
+    global has_key, state, velocity_y
 
     if level is None or state != "playing":
         return
@@ -99,14 +126,21 @@ def update():
     move_horizontal(horizontal_movement)
     move_vertical()
 
+    if level.player_touches_hazard(player):
+        state = "lost"
+        velocity_y = 0
+        return
+
     if level.collect_keys_at(player):
         has_key = True
 
     if has_key and level.player_is_at_exit(player):
-        state = "won"
+        advance_level()
+        return
 
     if player.top > level.bounds.bottom:
-        reset_player()
+        state = "lost"
+        velocity_y = 0
 
 
 def on_key_down(key):
@@ -114,8 +148,31 @@ def on_key_down(key):
 
     if state == "playing" and on_ground and key in (keys.UP, keys.SPACE):
         velocity_y = JUMP_SPEED
+    elif state == "lost" and key == keys.R:
+        load_level(current_level_index)
     elif state == "won" and key == keys.R:
         start()
+
+
+def draw_state_message(screen, title, instruction):
+    message_panel = Rect(
+        ((MAP_WIDTH - 370) // 2, (MAP_HEIGHT - 100) // 2),
+        (370, 100),
+    )
+    screen.draw.filled_rect(message_panel, (12, 25, 42))
+    screen.draw.rect(message_panel, PLAYER_BORDER)
+    screen.draw.text(
+        title,
+        center=(MAP_WIDTH // 2, message_panel.y + 30),
+        color=TEXT_COLOR,
+        fontsize=34,
+    )
+    screen.draw.text(
+        instruction,
+        center=(MAP_WIDTH // 2, message_panel.y + 70),
+        color=TEXT_COLOR,
+        fontsize=20,
+    )
 
 
 def draw(screen):
@@ -131,24 +188,14 @@ def draw(screen):
     objective = "KEY COLLECTED - FIND THE DOOR" if has_key else "FIND THE KEY"
     screen.draw.text(
         objective,
-        midtop=(400, 8),
+        midtop=(MAP_WIDTH // 2, 8),
         color=TEXT_COLOR,
         fontsize=18,
         shadow=(1, 1),
         scolor=(0, 0, 0),
     )
 
-    if state == "won":
-        screen.draw.filled_rect(Rect((215, 170), (370, 100)), (12, 25, 42))
-        screen.draw.text(
-            "LEVEL COMPLETE",
-            center=(400, 200),
-            color=TEXT_COLOR,
-            fontsize=34,
-        )
-        screen.draw.text(
-            "Press R to play again",
-            center=(400, 240),
-            color=TEXT_COLOR,
-            fontsize=20,
-        )
+    if state == "lost":
+        draw_state_message(screen, "YOU DIED", "Press R to restart")
+    elif state == "won":
+        draw_state_message(screen, "LEVEL COMPLETE", "Press R to play again")

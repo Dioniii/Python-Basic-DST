@@ -1,16 +1,17 @@
 import pgzrun
 import gameplay
+from platformer import MAP_HEIGHT, MAP_WIDTH
 
-WIDTH = 800
-HEIGHT = 450
+WIDTH = MAP_WIDTH
+HEIGHT = MAP_HEIGHT
 
 BUTTON_WIDTH = 240
-BUTTON_HEIGHT = 55
-BUTTON_GAP = 20
+BUTTON_HEIGHT = 48
+BUTTON_GAP = 14
 BUTTON_X = (WIDTH - BUTTON_WIDTH) // 2
 
-menu_panel = Rect(190, 30, 420, 390)
-startButton = Rect(BUTTON_X, 165, BUTTON_WIDTH, BUTTON_HEIGHT)
+menu_panel = Rect(55, 15, 430, 330)
+startButton = Rect(BUTTON_X, 135, BUTTON_WIDTH, BUTTON_HEIGHT)
 soundButton = Rect(
     BUTTON_X,
     startButton.bottom + BUTTON_GAP,
@@ -54,11 +55,12 @@ def draw_button(button, label, button_name):
 
     screen.draw.filled_rect(button, BUTTON_BORDER)
     screen.draw.filled_rect(button.inflate(-4, -4), button_color)
-    screen.draw.text(label, center=button.center, color=text_color, fontsize=30)
+    screen.draw.text(label, center=button.center, color=text_color, fontsize=26)
 
 
 def draw_menu():
-    screen.blit("menu_background", (0, 0))
+    # Centre-crop the existing 800 x 450 art without scaling it.
+    screen.blit("menu_background", ((WIDTH - 800) // 2, (HEIGHT - 450) // 2))
 
     screen.draw.filled_rect(menu_panel, (12, 25, 42))
     screen.draw.rect(menu_panel, PANEL_BORDER)
@@ -66,15 +68,15 @@ def draw_menu():
 
     screen.draw.text(
         "Industrial Warfare",
-        center=(WIDTH // 2, 82),
+        center=(WIDTH // 2, 58),
         color=TEXT_COLOR,
-        fontsize=40,
+        fontsize=36,
         shadow=(1, 1),
         scolor=(0, 0, 0),
     )
     screen.draw.text(
         "MAIN MENU",
-        center=(WIDTH // 2, 125),
+        center=(WIDTH // 2, 100),
         color=ACCENT_COLOR,
         fontsize=20,
     )
@@ -89,9 +91,9 @@ def draw_game():
     gameplay.draw(screen)
     screen.draw.text(
         "Press ESC to return to the menu",
-        midbottom=(WIDTH // 2, HEIGHT - 12),
+        midbottom=(WIDTH // 2, HEIGHT - 7),
         color=TEXT_COLOR,
-        fontsize=20,
+        fontsize=17,
         shadow=(1, 1),
         scolor=(0, 0, 0),
     )
