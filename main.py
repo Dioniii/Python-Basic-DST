@@ -139,6 +139,7 @@ def on_mouse_down(pos, button):
     elif soundButton.collidepoint(pos):
         sound_on = not sound_on
         background_sound.set_volume(0.25 if sound_on else 0)
+        gameplay.set_sound_enabled(sound_on)
 
     elif exitButton.collidepoint(pos):
         raise SystemExit

@@ -1,4 +1,4 @@
-from pgzero.builtins import Rect, keyboard, keys
+from pgzero.builtins import Rect, keyboard, keys, sounds
 
 from enemy import (
     create_robot_enemies,
@@ -95,12 +95,24 @@ animation_tick = 0
 facing_left = False
 bullets = []
 enemies = []
+sound_enabled = True
 
 
 class Bullet:
     def __init__(self, position, direction):
         self.rect = Rect(position, BULLET_SIZE)
         self.velocity_x = BULLET_SPEED * direction
+
+
+def set_sound_enabled(enabled):
+    global sound_enabled
+    sound_enabled = enabled
+
+
+def play_sound(effect):
+    if sound_enabled:
+        effect.set_volume(0.35)
+        effect.play()
 
 
 def reset_player():
@@ -158,9 +170,17 @@ def advance_level():
     next_level_index = current_level_index + 1
 
     if next_level_index < len(LEVELS):
+        play_sound(sounds.door)
         load_level(next_level_index)
     else:
-        state = "game_over"
+        state = "mission_complete"
+        play_sound(sounds.missionwin)
+
+
+def lose_player():
+    global state, velocity_y
+    state, velocity_y = "lost", 0
+    play_sound(sounds.gameover)
 
 
 def move_horizontal(amount):
@@ -209,6 +229,7 @@ def shoot_bullet():
         bullet_x = player.right
 
     bullets.append(Bullet((bullet_x, bullet_y), direction))
+    play_sound(sounds.gun)
 
 
 def update_bullets():
@@ -256,25 +277,23 @@ def update():
     animation_tick = animation_tick + 1 if on_ground else 0
 
     if level.player_touches_hazard(player):
-        state = "lost"
-        velocity_y = 0
+        lose_player()
         return
 
     if player_touches_enemy(player, enemies):
-        state = "lost"
-        velocity_y = 0
+        lose_player()
         return
 
     if level.collect_items_at(player):
         has_key = True
+        play_sound(sounds.keycollection)
 
     if has_key and level.player_is_at_exit(player):
         advance_level()
         return
 
     if player.top > level.bounds.bottom:
-        state = "lost"
-        velocity_y = 0
+        lose_player()
 
 
 def on_key_down(key):
@@ -286,7 +305,7 @@ def on_key_down(key):
         shoot_bullet()
     elif state == "lost" and key == keys.R:
         load_level(current_level_index)
-    elif state == "game_over" and key == keys.R:
+    elif state == "mission_complete" and key == keys.R:
         return "menu"
 
     return None
@@ -357,5 +376,5 @@ def draw(screen):
 
     if state == "lost":
         draw_state_message(screen, "YOU DIED", "Press R to restart")
-    elif state == "game_over":
-        draw_state_message(screen, "GAME OVER", "Press R for main menu")
+    elif state == "mission_complete":
+        draw_state_message(screen, "MISSION COMPLETE", "Press R for main menu")
