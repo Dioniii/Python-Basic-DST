@@ -15,6 +15,7 @@ MAP_HEIGHT = MAP_ROWS * TILE_SIZE
 MAP_ORIGIN = (0, 0)
 
 LAYER_SUFFIXES = (
+    ("background", "background items"),
     ("platforms", "platforms"),
     ("obstacles", "obsticle"),
     ("scaffolding", "scaffolding"),
@@ -97,7 +98,8 @@ class TileMap:
 
         self.solid_rects = [
             tile.rect
-            for tile in self.layers["platforms"]
+            for layer_name in ("platforms", "scaffolding")
+            for tile in self.layers[layer_name]
         ] + [
             tile.rect
             for tile in self.layers["obstacles"]
