@@ -137,10 +137,10 @@ def on_mouse_down(pos, button):
 
     elif soundButton.collidepoint(pos):
         sound_on = not sound_on
-        background_sound.set_volume(0.4 if sound_on else 0)
+        background_sound.set_volume(0.25 if sound_on else 0)
 
     elif exitButton.collidepoint(pos):
-        exit()
+        raise SystemExit
 
 
 def on_key_down(key):
@@ -148,6 +148,8 @@ def on_key_down(key):
 
     if key == keys.ESCAPE and current_screen == "game":
         current_screen = "menu"
+    elif current_screen == "game":
+        gameplay.on_key_down(key)
 
 
 pgzrun.go()
