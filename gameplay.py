@@ -1,7 +1,8 @@
 from pgzero.builtins import Rect, keyboard, keys
 
 from enemy import (
-    create_enemies,
+    create_robot_enemies,
+    create_zombie_enemies,
     draw_enemies,
     player_touches_enemy,
     remove_bullet_hits,
@@ -52,7 +53,11 @@ LEVELS = (
         "name": "untitled",
         "spawn": (4, 11),
         "collectible_name": "KEY",
-        "has_enemies": False,
+        "enemy_type": "zombie",
+        "enemy_routes": (
+            (8, 12, 10),
+            (21, 24, 6),
+        ),
         "layers": {
             "background": "levels/level1/untitled_background items.csv",
             "platforms": "levels/level1/untitled_platforms.csv",
@@ -66,7 +71,7 @@ LEVELS = (
         "name": "level2",
         "spawn": (1, 19),
         "collectible_name": "CHEST",
-        "has_enemies": True,
+        "enemy_type": "robot",
         "layers": {
             "background": "levels/level2/level2_background.csv",
             "platforms": "levels/level2/level2_platforms.csv",
@@ -121,11 +126,20 @@ def load_level(level_index):
     has_key = False
     state = "playing"
     bullets = []
-    enemies = (
-        create_enemies(level.layers["platforms"], TILE_SIZE)
-        if LEVELS[level_index]["has_enemies"]
-        else []
-    )
+    enemy_type = LEVELS[level_index].get("enemy_type")
+
+    if enemy_type == "zombie":
+        enemies = create_zombie_enemies(
+            LEVELS[level_index]["enemy_routes"],
+            TILE_SIZE,
+        )
+    elif enemy_type == "robot":
+        enemies = create_robot_enemies(
+            level.layers["platforms"],
+            TILE_SIZE,
+        )
+    else:
+        enemies = []
     reset_player()
 
 

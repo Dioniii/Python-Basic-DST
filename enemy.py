@@ -1,3 +1,5 @@
+"""Shared autonomous patrol logic for robot and zombie enemies."""
+
 from pgzero.builtins import Rect
 
 
@@ -7,19 +9,34 @@ ENEMY_SPEED = 1
 ANIMATION_FRAME_LENGTH = 6
 MIN_PLATFORM_TILES = 2
 
-RIGHT_WALK_IMAGES = tuple(
+ROBOT_RIGHT_WALK_IMAGES = tuple(
     f"enemy/enemy_robot_walk_{frame}" for frame in range(8)
 )
-LEFT_WALK_IMAGES = tuple(
+ROBOT_LEFT_WALK_IMAGES = tuple(
     f"enemy/enemy_robot_walk_{frame}_left" for frame in range(8)
+)
+ZOMBIE_RIGHT_WALK_IMAGES = tuple(
+    f"zombieenemy/zombie_walk_{frame}" for frame in range(8)
+)
+ZOMBIE_LEFT_WALK_IMAGES = tuple(
+    f"zombieenemy/zombie_walk_{frame}_left" for frame in range(8)
 )
 
 
 class Enemy:
-
-    def __init__(self, patrol_left, patrol_right, platform_top, direction=1):
+    def __init__(
+        self,
+        patrol_left,
+        patrol_right,
+        platform_top,
+        right_images,
+        left_images,
+        direction=1,
+    ):
         self.patrol_left = patrol_left
         self.patrol_right = patrol_right
+        self.right_images = right_images
+        self.left_images = left_images
         self.direction = direction
         self.animation_tick = 0
 
@@ -40,7 +57,7 @@ class Enemy:
         self.animation_tick += 1
 
     def draw(self, screen):
-        frames = LEFT_WALK_IMAGES if self.direction < 0 else RIGHT_WALK_IMAGES
+        frames = self.left_images if self.direction < 0 else self.right_images
         frame_number = (
             self.animation_tick // ANIMATION_FRAME_LENGTH
         ) % len(frames)
@@ -50,7 +67,6 @@ class Enemy:
 
 
 def find_patrol_routes(platform_tiles, tile_size):
-
     platform_cells = {
         (tile.rect.x, tile.rect.y)
         for tile in platform_tiles
@@ -88,15 +104,42 @@ def find_patrol_routes(platform_tiles, tile_size):
     return sorted(routes, key=lambda route: (route[2], route[0]))
 
 
-def create_enemies(platform_tiles, tile_size):
-
+def create_robot_enemies(platform_tiles, tile_size):
     enemies = []
 
     for route_number, route in enumerate(
         find_patrol_routes(platform_tiles, tile_size)
     ):
         direction = -1 if route_number % 2 else 1
-        enemies.append(Enemy(*route, direction=direction))
+        enemies.append(
+            Enemy(
+                *route,
+                ROBOT_RIGHT_WALK_IMAGES,
+                ROBOT_LEFT_WALK_IMAGES,
+                direction=direction,
+            )
+        )
+
+    return enemies
+
+
+def create_zombie_enemies(tile_routes, tile_size):
+    enemies = []
+
+    for route_number, (start_column, end_column, floor_row) in enumerate(
+        tile_routes
+    ):
+        direction = -1 if route_number % 2 else 1
+        enemies.append(
+            Enemy(
+                start_column * tile_size,
+                (end_column + 1) * tile_size,
+                floor_row * tile_size,
+                ZOMBIE_RIGHT_WALK_IMAGES,
+                ZOMBIE_LEFT_WALK_IMAGES,
+                direction=direction,
+            )
+        )
 
     return enemies
 
@@ -116,7 +159,6 @@ def player_touches_enemy(player_rect, enemies):
 
 
 def remove_bullet_hits(enemies, bullets):
-
     surviving_enemies = []
     hit_bullets = set()
 
