@@ -1,5 +1,12 @@
 from pgzero.builtins import Rect, keyboard, keys
 
+from enemy import (
+    create_enemies,
+    draw_enemies,
+    player_touches_enemy,
+    remove_bullet_hits,
+    update_enemies,
+)
 from platformer import MAP_HEIGHT, MAP_ORIGIN, MAP_WIDTH, TILE_SIZE, TileMap
 
 
@@ -45,6 +52,7 @@ LEVELS = (
         "name": "untitled",
         "spawn": (4, 11),
         "collectible_name": "KEY",
+        "has_enemies": False,
         "layers": {
             "background": "levels/level1/untitled_background items.csv",
             "platforms": "levels/level1/untitled_platforms.csv",
@@ -58,6 +66,7 @@ LEVELS = (
         "name": "level2",
         "spawn": (1, 19),
         "collectible_name": "CHEST",
+        "has_enemies": True,
         "layers": {
             "background": "levels/level2/level2_background.csv",
             "platforms": "levels/level2/level2_platforms.csv",
@@ -79,6 +88,7 @@ state = "playing"
 animation_tick = 0
 facing_left = False
 bullets = []
+enemies = []
 
 
 class Bullet:
@@ -104,13 +114,18 @@ def reset_player():
 def load_level(level_index):
     """Load one level and reset its player, key, and game state."""
 
-    global level, current_level_index, has_key, state, bullets
+    global level, current_level_index, has_key, state, bullets, enemies
 
     current_level_index = level_index
     level = TileMap(LEVELS[level_index]["layers"])
     has_key = False
     state = "playing"
     bullets = []
+    enemies = (
+        create_enemies(level.layers["platforms"], TILE_SIZE)
+        if LEVELS[level_index]["has_enemies"]
+        else []
+    )
     reset_player()
 
 
@@ -220,6 +235,8 @@ def update():
     move_horizontal(horizontal_movement)
     move_vertical()
     update_bullets()
+    update_enemies(enemies)
+    remove_bullet_hits(enemies, bullets)
 
     if horizontal_movement != 0 and on_ground:
         animation_tick += 1
@@ -227,6 +244,11 @@ def update():
         animation_tick = 0
 
     if level.player_touches_hazard(player):
+        state = "lost"
+        velocity_y = 0
+        return
+
+    if player_touches_enemy(player, enemies):
         state = "lost"
         velocity_y = 0
         return
@@ -297,6 +319,7 @@ def draw(screen):
         return
 
     level.draw(screen)
+    draw_enemies(screen, enemies)
     sprite_x = player.centerx - PLAYER_SPRITE_SIZE[0] // 2
     sprite_y = player.bottom - PLAYER_SPRITE_SIZE[1]
     screen.blit(get_player_image(), (sprite_x, sprite_y))
