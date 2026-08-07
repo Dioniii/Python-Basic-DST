@@ -59,7 +59,6 @@ def draw_button(button, label, button_name):
 
 
 def draw_menu():
-    # Centre-crop the existing 800 x 450 art without scaling it.
     screen.blit("menu_background", ((WIDTH - 800) // 2, (HEIGHT - 450) // 2))
 
     screen.draw.filled_rect(menu_panel, (12, 25, 42))

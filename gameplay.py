@@ -9,12 +9,34 @@ GRAVITY = 1
 MAX_FALL_SPEED = 12
 JUMP_SPEED = -13
 
-PLAYER_COLOR = (204, 86, 45)
 PLAYER_BORDER = (255, 245, 216)
 TEXT_COLOR = (255, 245, 216)
 
-# Add another dictionary here after exporting its five CSV layers. The door
-# advances through this list in order.
+PLAYER_SPRITE_SIZE = (40, 36)
+PLAYER_IDLE_IMAGES = (
+    "robot/robot_red_drive_1",
+    "robot/robot_red_drive_1_left",
+)
+PLAYER_DRIVE_IMAGES = (
+    (
+        "robot/robot_red_drive_1",
+        "robot/robot_red_drive_2",
+    ),
+    (
+        "robot/robot_red_drive_1_left",
+        "robot/robot_red_drive_2_left",
+    ),
+)
+PLAYER_JUMP_IMAGES = (
+    "robot/robot_red_jump",
+    "robot/robot_red_jump_left",
+)
+PLAYER_HURT_IMAGES = (
+    "robot/robot_red_hurt",
+    "robot/robot_red_hurt_left",
+)
+ANIMATION_FRAME_LENGTH = 8
+
 LEVELS = (
     {
         "name": "untitled",
@@ -29,18 +51,22 @@ velocity_y = 0
 on_ground = False
 has_key = False
 state = "playing"
+animation_tick = 0
+facing_left = False
 
 
 def reset_player():
     """Return the player to the map's starting platform."""
 
-    global velocity_y, on_ground
+    global velocity_y, on_ground, animation_tick, facing_left
 
     spawn_column, spawn_floor_row = LEVELS[current_level_index]["spawn"]
     player.x = MAP_ORIGIN[0] + spawn_column * TILE_SIZE
     player.bottom = MAP_ORIGIN[1] + spawn_floor_row * TILE_SIZE
     velocity_y = 0
-    on_ground = False
+    on_ground = True
+    animation_tick = 0
+    facing_left = False
 
 
 def load_level(level_index):
@@ -111,7 +137,7 @@ def move_vertical():
 
 
 def update():
-    global has_key, state, velocity_y
+    global has_key, state, velocity_y, animation_tick, facing_left
 
     if level is None or state != "playing":
         return
@@ -123,8 +149,18 @@ def update():
     if keyboard.right:
         horizontal_movement += MOVE_SPEED
 
+    if horizontal_movement < 0:
+        facing_left = True
+    elif horizontal_movement > 0:
+        facing_left = False
+
     move_horizontal(horizontal_movement)
     move_vertical()
+
+    if horizontal_movement != 0 and on_ground:
+        animation_tick += 1
+    else:
+        animation_tick = 0
 
     if level.player_touches_hazard(player):
         state = "lost"
@@ -175,6 +211,17 @@ def draw_state_message(screen, title, instruction):
     )
 
 
+def get_player_image():
+    if state == "lost":
+        return PLAYER_HURT_IMAGES[facing_left]
+    if not on_ground:
+        return PLAYER_JUMP_IMAGES[facing_left]
+    if keyboard.left or keyboard.right:
+        frame_number = (animation_tick // ANIMATION_FRAME_LENGTH) % 2
+        return PLAYER_DRIVE_IMAGES[facing_left][frame_number]
+    return PLAYER_IDLE_IMAGES[facing_left]
+
+
 def draw(screen):
     screen.fill((12, 25, 42))
 
@@ -182,8 +229,9 @@ def draw(screen):
         return
 
     level.draw(screen)
-    screen.draw.filled_rect(player, PLAYER_COLOR)
-    screen.draw.rect(player, PLAYER_BORDER)
+    sprite_x = player.centerx - PLAYER_SPRITE_SIZE[0] // 2
+    sprite_y = player.bottom - PLAYER_SPRITE_SIZE[1]
+    screen.blit(get_player_image(), (sprite_x, sprite_y))
 
     objective = "KEY COLLECTED - FIND THE DOOR" if has_key else "FIND THE KEY"
     screen.draw.text(
