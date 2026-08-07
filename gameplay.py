@@ -8,9 +8,12 @@ MOVE_SPEED = 3
 GRAVITY = 1
 MAX_FALL_SPEED = 12
 JUMP_SPEED = -14
+BULLET_SIZE = (6, 3)
+BULLET_SPEED = 7
 
 PLAYER_BORDER = (255, 245, 216)
 TEXT_COLOR = (255, 245, 216)
+BULLET_COLOR = (245, 177, 66)
 
 PLAYER_SPRITE_SIZE = (40, 36)
 PLAYER_IDLE_IMAGES = (
@@ -75,6 +78,13 @@ has_key = False
 state = "playing"
 animation_tick = 0
 facing_left = False
+bullets = []
+
+
+class Bullet:
+    def __init__(self, position, direction):
+        self.rect = Rect(position, BULLET_SIZE)
+        self.velocity_x = BULLET_SPEED * direction
 
 
 def reset_player():
@@ -94,12 +104,13 @@ def reset_player():
 def load_level(level_index):
     """Load one level and reset its player, key, and game state."""
 
-    global level, current_level_index, has_key, state
+    global level, current_level_index, has_key, state, bullets
 
     current_level_index = level_index
     level = TileMap(LEVELS[level_index]["layers"])
     has_key = False
     state = "playing"
+    bullets = []
     reset_player()
 
 
@@ -158,6 +169,36 @@ def move_vertical():
         velocity_y = 0
 
 
+def shoot_bullet():
+    direction = -1 if facing_left else 1
+    bullet_y = player.centery - BULLET_SIZE[1] // 2
+
+    if facing_left:
+        bullet_x = player.left - BULLET_SIZE[0]
+    else:
+        bullet_x = player.right
+
+    bullets.append(Bullet((bullet_x, bullet_y), direction))
+
+
+def update_bullets():
+    active_bullets = []
+
+    for bullet in bullets:
+        bullet.rect.x += bullet.velocity_x
+
+        outside_level = (
+            bullet.rect.right < level.bounds.left
+            or bullet.rect.left > level.bounds.right
+        )
+        hit_solid = bullet.rect.collidelist(level.solid_rects) != -1
+
+        if not outside_level and not hit_solid:
+            active_bullets.append(bullet)
+
+    bullets[:] = active_bullets
+
+
 def update():
     global has_key, state, velocity_y, animation_tick, facing_left
 
@@ -178,6 +219,7 @@ def update():
 
     move_horizontal(horizontal_movement)
     move_vertical()
+    update_bullets()
 
     if horizontal_movement != 0 and on_ground:
         animation_tick += 1
@@ -204,8 +246,10 @@ def update():
 def on_key_down(key):
     global velocity_y
 
-    if state == "playing" and on_ground and key in (keys.UP, keys.SPACE):
+    if state == "playing" and on_ground and key == keys.UP:
         velocity_y = JUMP_SPEED
+    elif state == "playing" and key == keys.SPACE:
+        shoot_bullet()
     elif state == "lost" and key == keys.R:
         load_level(current_level_index)
     elif state == "game_over" and key == keys.R:
@@ -256,6 +300,9 @@ def draw(screen):
     sprite_x = player.centerx - PLAYER_SPRITE_SIZE[0] // 2
     sprite_y = player.bottom - PLAYER_SPRITE_SIZE[1]
     screen.blit(get_player_image(), (sprite_x, sprite_y))
+
+    for bullet in bullets:
+        screen.draw.filled_rect(bullet.rect, BULLET_COLOR)
 
     collectible_name = LEVELS[current_level_index]["collectible_name"]
     objective = (
