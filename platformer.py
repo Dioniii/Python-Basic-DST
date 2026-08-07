@@ -14,13 +14,13 @@ MAP_HEIGHT = MAP_ROWS * TILE_SIZE
 # The application window matches the map, so tiles start at its top-left edge.
 MAP_ORIGIN = (0, 0)
 
-LAYER_SUFFIXES = (
-    ("background", "background items"),
-    ("platforms", "platforms"),
-    ("obstacles", "obsticle"),
-    ("scaffolding", "scaffolding"),
-    ("doors", "door"),
-    ("keys", "key"),
+DRAW_ORDER = (
+    "background",
+    "platforms",
+    "obstacles",
+    "scaffolding",
+    "doors",
+    "collectibles",
 )
 
 # Acid surfaces and acid body tiles from the obstacle layer.
@@ -89,11 +89,16 @@ def load_csv_layer(filename, tile_size=TILE_SIZE, origin=MAP_ORIGIN):
 class TileMap:
     """All visual, collision, collectible, and exit data for one level."""
 
-    def __init__(self, level_name):
-        self.level_name = level_name
+    def __init__(self, layer_files):
+        missing_layers = set(DRAW_ORDER) - set(layer_files)
+
+        if missing_layers:
+            missing_names = ", ".join(sorted(missing_layers))
+            raise ValueError(f"Missing level layers: {missing_names}")
+
         self.layers = {
-            layer_name: load_csv_layer(f"{level_name}_{suffix}.csv")
-            for layer_name, suffix in LAYER_SUFFIXES
+            layer_name: load_csv_layer(layer_files[layer_name])
+            for layer_name in DRAW_ORDER
         }
 
         self.solid_rects = [
@@ -120,23 +125,23 @@ class TileMap:
     def draw(self, screen):
         """Draw layers in back-to-front order."""
 
-        for layer_name, _suffix in LAYER_SUFFIXES:
+        for layer_name in DRAW_ORDER:
             for tile in self.layers[layer_name]:
                 screen.blit(tile.image, tile.rect.topleft)
 
-    def collect_keys_at(self, player_rect):
-        """Remove and report any key tile touched by the player."""
+    def collect_items_at(self, player_rect):
+        """Remove and report any unlock item touched by the player."""
 
-        remaining_keys = []
+        remaining_items = []
         collected = False
 
-        for tile in self.layers["keys"]:
+        for tile in self.layers["collectibles"]:
             if player_rect.colliderect(tile.rect):
                 collected = True
             else:
-                remaining_keys.append(tile)
+                remaining_items.append(tile)
 
-        self.layers["keys"] = remaining_keys
+        self.layers["collectibles"] = remaining_items
         return collected
 
     def player_is_at_exit(self, player_rect):

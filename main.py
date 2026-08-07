@@ -150,7 +150,10 @@ def on_key_down(key):
     if key == keys.ESCAPE and current_screen == "game":
         current_screen = "menu"
     elif current_screen == "game":
-        gameplay.on_key_down(key)
+        action = gameplay.on_key_down(key)
+
+        if action == "menu":
+            current_screen = "menu"
 
 
 pgzrun.go()

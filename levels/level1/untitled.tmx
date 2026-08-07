@@ -3,7 +3,7 @@
  <editorsettings>
   <export target="untitled.csv" format="csv"/>
  </editorsettings>
- <tileset firstgid="1" source="tilemap_packed.tsx"/>
+ <tileset firstgid="1" source="../tilemap_packed.tsx"/>
  <layer id="1" name="platforms" width="30" height="20" offsetx="0.666667" offsety="-0.666667">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

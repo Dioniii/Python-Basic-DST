@@ -7,7 +7,7 @@ PLAYER_SIZE = (14, 28)
 MOVE_SPEED = 3
 GRAVITY = 1
 MAX_FALL_SPEED = 12
-JUMP_SPEED = -13
+JUMP_SPEED = -14
 
 PLAYER_BORDER = (255, 245, 216)
 TEXT_COLOR = (255, 245, 216)
@@ -41,6 +41,28 @@ LEVELS = (
     {
         "name": "untitled",
         "spawn": (4, 11),
+        "collectible_name": "KEY",
+        "layers": {
+            "background": "levels/level1/untitled_background items.csv",
+            "platforms": "levels/level1/untitled_platforms.csv",
+            "obstacles": "levels/level1/untitled_obsticle.csv",
+            "scaffolding": "levels/level1/untitled_scaffolding.csv",
+            "doors": "levels/level1/untitled_door.csv",
+            "collectibles": "levels/level1/untitled_key.csv",
+        },
+    },
+    {
+        "name": "level2",
+        "spawn": (1, 19),
+        "collectible_name": "CHEST",
+        "layers": {
+            "background": "levels/level2/level2_background.csv",
+            "platforms": "levels/level2/level2_platforms.csv",
+            "obstacles": "levels/level2/level2_obsticle.csv",
+            "scaffolding": "levels/level2/level2_scaffolding.csv",
+            "doors": "levels/level2/level2_door.csv",
+            "collectibles": "levels/level2/level2_chest.csv",
+        },
     },
 )
 
@@ -75,7 +97,7 @@ def load_level(level_index):
     global level, current_level_index, has_key, state
 
     current_level_index = level_index
-    level = TileMap(LEVELS[level_index]["name"])
+    level = TileMap(LEVELS[level_index]["layers"])
     has_key = False
     state = "playing"
     reset_player()
@@ -97,7 +119,7 @@ def advance_level():
     if next_level_index < len(LEVELS):
         load_level(next_level_index)
     else:
-        state = "won"
+        state = "game_over"
 
 
 def move_horizontal(amount):
@@ -167,7 +189,7 @@ def update():
         velocity_y = 0
         return
 
-    if level.collect_keys_at(player):
+    if level.collect_items_at(player):
         has_key = True
 
     if has_key and level.player_is_at_exit(player):
@@ -186,8 +208,10 @@ def on_key_down(key):
         velocity_y = JUMP_SPEED
     elif state == "lost" and key == keys.R:
         load_level(current_level_index)
-    elif state == "won" and key == keys.R:
-        start()
+    elif state == "game_over" and key == keys.R:
+        return "menu"
+
+    return None
 
 
 def draw_state_message(screen, title, instruction):
@@ -233,7 +257,12 @@ def draw(screen):
     sprite_y = player.bottom - PLAYER_SPRITE_SIZE[1]
     screen.blit(get_player_image(), (sprite_x, sprite_y))
 
-    objective = "KEY COLLECTED - FIND THE DOOR" if has_key else "FIND THE KEY"
+    collectible_name = LEVELS[current_level_index]["collectible_name"]
+    objective = (
+        "DOOR UNLOCKED - FIND THE DOOR"
+        if has_key
+        else f"FIND THE {collectible_name}"
+    )
     screen.draw.text(
         objective,
         midtop=(MAP_WIDTH // 2, 8),
@@ -245,5 +274,5 @@ def draw(screen):
 
     if state == "lost":
         draw_state_message(screen, "YOU DIED", "Press R to restart")
-    elif state == "won":
-        draw_state_message(screen, "LEVEL COMPLETE", "Press R to play again")
+    elif state == "game_over":
+        draw_state_message(screen, "GAME OVER", "Press R for main menu")
