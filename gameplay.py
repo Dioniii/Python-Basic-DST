@@ -25,9 +25,10 @@ BULLET_COLOR = (245, 177, 66)
 
 PLAYER_SPRITE_SIZE = (40, 36)
 PLAYER_IDLE_IMAGES = (
-    "robot/robot_red_drive_1",
-    "robot/robot_red_drive_1_left",
+    ("robot/robot_red_drive_1", "robot/robot_red_idle_bob", "robot/robot_red_idle_blink"),
+    ("robot/robot_red_drive_1_left", "robot/robot_red_idle_bob_left", "robot/robot_red_idle_blink_left"),
 )
+IDLE_SEQUENCE = (0, 1, 0, 1, 0, 1, 0, 2)
 PLAYER_DRIVE_IMAGES = (
     (
         "robot/robot_red_drive_1",
@@ -252,10 +253,7 @@ def update():
     update_enemies(enemies)
     remove_bullet_hits(enemies, bullets)
 
-    if horizontal_movement != 0 and on_ground:
-        animation_tick += 1
-    else:
-        animation_tick = 0
+    animation_tick = animation_tick + 1 if on_ground else 0
 
     if level.player_touches_hazard(player):
         state = "lost"
@@ -323,7 +321,8 @@ def get_player_image():
     if keyboard.left or keyboard.right:
         frame_number = (animation_tick // ANIMATION_FRAME_LENGTH) % 2
         return PLAYER_DRIVE_IMAGES[facing_left][frame_number]
-    return PLAYER_IDLE_IMAGES[facing_left]
+    idle_frame = IDLE_SEQUENCE[(animation_tick // 10) % len(IDLE_SEQUENCE)]
+    return PLAYER_IDLE_IMAGES[facing_left][idle_frame]
 
 
 def draw(screen):
